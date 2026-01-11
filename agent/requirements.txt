@@ -1,0 +1,20 @@
+# Web framework
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+
+# OpenAI API
+openai==1.12.0
+
+# Configuration & validation
+pydantic==2.6.4
+python-dotenv==1.0.1
+
+# Utilities
+requests==2.31.0
+
+# Diff / patch helpers
+# difflib-json==0.1.1
+
+# Optional (enable later, safe to install now)
+tiktoken==0.6.0        # token counting / truncation
+rich==13.7.1          # better logs
