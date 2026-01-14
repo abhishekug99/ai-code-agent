@@ -27,5 +27,120 @@ Set-Content -Path $outPath -Value $response.updated_text -Encoding UTF8
 
 "Written to: $outPath"
 
-
 }
+
+To setup extensions
+cd extension
+npm init -y
+npm i --save axios
+npm i --save-dev typescript @types/node @types/vscode vscode-test #dev based dependencies for vs code extension
+npx tsc --init
+
+To complile extension
+cd extension
+npm run compile
+
+
+basic run for full initial app
+0) Prereqs checklist
+
+Before doing anything, make sure:
+
+Your FastAPI agent is running at http://localhost:8787
+
+In a terminal:
+
+uvicorn agent.app.main:app --reload --port 8787
+
+
+Open this in browser: http://localhost:8787/health → should show ok.
+
+Your extension compiled once:
+
+cd extension
+npm run compile
+
+1) Open the project correctly in VS Code
+
+Open VS Code
+
+Click File → Open Folder…
+
+Select the root folder:
+D:\Abhishek\Syracuse\UpScale\ai-code-agent
+
+This is important because your .vscode/launch.json expects the extension folder at:
+ai-code-agent/extension
+
+2) Run the Extension (Extension Development Host)
+
+In VS Code, on the left sidebar, click the Run and Debug icon
+
+It looks like a ▶️ play button with a bug 🐞
+
+At the top, you should see a dropdown like:
+Run AI Code Agent Extension
+
+Click the green Start Debugging ▶️ button
+
+Shortcut: F5
+
+✅ This opens a new VS Code window called:
+Extension Development Host
+That new window is where you test your extension.
+
+3) Open a Python file in the Extension Host window
+
+Inside the Extension Development Host window:
+
+Click File → Open Folder…
+
+Open the same project folder again:
+D:\Abhishek\Syracuse\UpScale\ai-code-agent
+
+Open any .py file (example: sample.py)
+
+If you don’t have one, create a new file sample.py with:
+
+def add(a,b):
+    return a+b
+
+4) Select code
+
+Click and drag to highlight a function, like:
+
+def add(a,b):
+    return a+b
+
+5) Open the Command Palette (this is what you asked)
+
+The Command Palette is a search bar that runs commands.
+
+How to open it:
+
+✅ Shortcut (Windows):
+Ctrl + Shift + P
+
+✅ Menu path:
+View → Command Palette…
+
+When it opens, a bar appears at the top center of VS Code.
+
+6) Run your command: “AI: Edit Selection”
+
+Open Command Palette: Ctrl + Shift + P
+
+Type:
+AI: Edit Selection
+
+Click it / press Enter
+
+A prompt box will show asking for instruction.
+
+7) Enter instruction
+
+Type:
+Add type hints and a docstring. Keep behavior identical.
+Press Enter.
+
+Now it calls your FastAPI /edit.
