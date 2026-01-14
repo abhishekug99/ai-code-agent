@@ -1,0 +1,31 @@
+env : py -3.8 -m venv .venv | .venv\Scripts\Activate.ps1
+uvicorn on port: uvicorn agent.app.main:app --reload --port 8787
+
+to test : give call to api for code change eg : {
+    1. command:
+    $body = @{
+  instruction = "Add type hints and a docstring. Keep behavior identical."
+  file_path = "sample.py"
+  original_text = "def add(a,b)`n    return a+b`n"
+} | ConvertTo-Json
+
+    2. to use to see output
+    $response = Invoke-RestMethod -Uri "http://localhost:8787/edit" `
+    -Method Post -ContentType "application/json" -Body $body
+     $response.unified_diff
+
+     $response = Invoke-RestMethod -Uri "http://localhost:8787/edit" -Method Post -ContentType "application/json" -Body $body
+    $response.unified_diff
+    $response.updated_text
+
+    3.to write file 
+    $response = Invoke-RestMethod -Uri "http://localhost:8787/edit" -Method Post -ContentType "application/json" -Body $body
+
+# Write updated text to a test file in repo root
+$outPath = "D:\Abhishek\Syracuse\UpScale\ai-code-agent\sample.updated.py"
+Set-Content -Path $outPath -Value $response.updated_text -Encoding UTF8
+
+"Written to: $outPath"
+
+
+}
