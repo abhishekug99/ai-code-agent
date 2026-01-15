@@ -3,21 +3,6 @@ import axios from "axios";
 import * as path from "path";
 import { editCode, EditRequest, EditResponse } from "./api";
 
-
-// type EditRequest = {
-//     instruction: string;
-//     file_path: string;
-//     original_text: string;
-//     user_context?: string | null;
-// };
-
-// type EditResponse = {
-//     file_path: string;
-//     unified_diff: string;
-//     updated_text: string;
-//     warnings: string[];
-// }
-
 function getRepoRelativePath(fileFsPath: string): string {
     const folders = vscode.workspace.workspaceFolders;
     if (!folders || folders.length === 0) return path.basename(fileFsPath);
