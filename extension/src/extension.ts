@@ -1,20 +1,22 @@
 import * as vscode from "vscode";
 import axios from "axios";
 import * as path from "path";
+import { editCode, EditRequest, EditResponse } from "./api";
 
-type EditRequest = {
-    instruction: string;
-    file_path: string;
-    original_text: string;
-    user_context?: string | null;
-};
 
-type EditResponse = {
-    file_path: string;
-    unified_diff: string;
-    updated_text: string;
-    warnings: string[];
-}
+// type EditRequest = {
+//     instruction: string;
+//     file_path: string;
+//     original_text: string;
+//     user_context?: string | null;
+// };
+
+// type EditResponse = {
+//     file_path: string;
+//     unified_diff: string;
+//     updated_text: string;
+//     warnings: string[];
+// }
 
 function getRepoRelativePath(fileFsPath: string): string {
     const folders = vscode.workspace.workspaceFolders;
@@ -52,9 +54,9 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (!instruction || instruction.trim().length === 0) return;
 
-            const baseUrl = vscode.workspace
-                .getConfiguration()
-                .get<string>("aiCodeAgent.baseUrl", "http://localhost:8787");
+            // const baseUrl = vscode.workspace
+            //     .getConfiguration()
+            //     .get<string>("aiCodeAgent.baseUrl", "http://localhost:8787");
             
             const file_path = getRepoRelativePath(doc.uri.fsPath);
             const original_text = doc.getText();
@@ -76,12 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
                 async () => {
                     let resp: EditResponse;
                     try{
-                        const r = await axios.post(`${baseUrl}/edit`, payload, {
-                            headers: {"Content-Type": "application/json"},
-                            timeout: 120000
-                        });
-                        resp = r.data as EditResponse;
-
+                        resp = await editCode(payload);
                     } catch (e: any){
                         vscode.window.showErrorMessage(`Agent call failed: ${e?.message ?? e}`);
                         return;
