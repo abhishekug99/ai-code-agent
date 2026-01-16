@@ -38,10 +38,6 @@ export function activate(context: vscode.ExtensionContext) {
             });
 
             if (!instruction || instruction.trim().length === 0) return;
-
-            // const baseUrl = vscode.workspace
-            //     .getConfiguration()
-            //     .get<string>("aiCodeAgent.baseUrl", "http://localhost:8787");
             
             const file_path = getRepoRelativePath(doc.uri.fsPath);
             const original_text = doc.getText();
@@ -101,7 +97,89 @@ export function activate(context: vscode.ExtensionContext) {
 
         }
     );
+    const disposableFix = vscode.commands.registerCommand(
+        "aiCodeAgent.fixError",
+        async ()=>{
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                vscode.window.showErrorMessage("no active editor");
+                return;
+            }
+            const doc = editor.document;
+            const selection = editor.selection;
+            const selectedText = doc.getText(selection);
+            
+            const traceback  = await vscode.window.showInputBox({
+                title: "AI: Fix Error",
+                prompt: "Paste the traceback / error output (you can paste multi-line).",
+                placeHolder: "Traceback (most recent call last): ..."
+            });
+            if (!traceback || traceback.trim().length === 0) return;
+
+            const file_path = getRepoRelativePath(doc.uri.fsPath);
+            const original_text = doc.getText();
+
+            const instruction = 
+                "Fix the error described in the traceback. Make minimal, safe changes. " +
+                "Do not refactor unless required. Preserve behavior unrelated to the fix.";
+            
+            const user_context = `Traceback / error output: \n${traceback}\n\n`+
+            (selectedText && selectedText.trim().length>0
+                ? `Selected snippet (if relevant): \n${selectedText}\n`
+                : "No code snippet selected/ \n");
+            
+            const payload: EditRequest = {
+                instruction,
+                file_path,
+                original_text,
+                user_context
+            };
+
+            const progressTitle = "AI code Agent: fixing errors...";
+
+            await vscode.window.withProgress(
+                {location: vscode.ProgressLocation.Notification, title: progressTitle, cancellable: false},
+                async () => {
+                    let resp: EditResponse;
+                    try{
+                        resp = await editCode(payload);
+                    } catch (e: any){
+                        vscode.window.showErrorMessage(`Agent call failed: ${e?.message ?? e}`);
+                        return;
+                    }
+
+                    const out = vscode.window.createOutputChannel("AI code agent");
+                    out.show(true);
+                    out.appendLine(`----- Unified Diff ------`);
+                    out.appendLine(resp.unified_diff || "(empty diff)");
+                    if (resp.warnings?.length){
+                        out.appendLine(`----- Warnings ------`);
+                        resp.warnings.forEach(w=>out.appendLine(`- ${w}`));
+                    }
+
+                    const fullRange = new vscode.Range(
+                        doc.positionAt(0),
+                        doc.positionAt(original_text.length)
+                    );
+
+                    const edit = new vscode.WorkspaceEdit();
+                    edit.replace(doc.uri, fullRange, resp.updated_text);
+
+                    const ok = await vscode.workspace.applyEdit(edit);
+                    if (!ok){
+                        vscode.window.showErrorMessage("Failed to apply edit to workspace");
+                        return;
+                    }
+                    await doc.save();
+                    vscode.window.showInformationMessage("AI edit applied");
+                }
+            );
+
+        }
+    );
+
     context.subscriptions.push(disposable);
+    context.subscriptions.push(disposableFix);
 }
 
 export function deactivate() {}
