@@ -10,16 +10,18 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:aiCodeAgent.editSelection"
+        "onCommand:aiCodeAgent.editSelection",
+        "onCommand:aiCodeAgent.fixError"
     ],
     "main": "./out/extension.js",
     "contributes": {
-        "commands": [
-            {
-                "command": "aiCodeAgent.editSelection",
-                "title": "AI: Edit Selection"
-            }
-        ],
+        "commands": [{
+            "command": "aiCodeAgent.editSelection",
+            "title": "AI: Edit Selection"
+        }, {
+            "command": "aiCodeAgent.fixError",
+            "title": "AI: Fix Error"
+        }],
         "configuration": {
             "title": "AI Code Agent",
             "properties": {
