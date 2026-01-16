@@ -15,13 +15,16 @@
     ],
     "main": "./out/extension.js",
     "contributes": {
-        "commands": [{
-            "command": "aiCodeAgent.editSelection",
-            "title": "AI: Edit Selection"
-        }, {
-            "command": "aiCodeAgent.fixError",
-            "title": "AI: Fix Error"
-        }],
+        "commands": [
+            {
+                "command": "aiCodeAgent.editSelection",
+                "title": "AI: Edit Selection"
+            },
+            {
+                "command": "aiCodeAgent.fixError",
+                "title": "AI: Fix Error"
+            }
+        ],
         "configuration": {
             "title": "AI Code Agent",
             "properties": {
