@@ -11,18 +11,22 @@
     ],
     "activationEvents": [
         "onCommand:aiCodeAgent.editSelection",
-        "onCommand:aiCodeAgent.fixError"
+        "onCommand:aiCodeAgent.fixError",
+        "onCommand:aiCodeAgent.workspaceEdit"
     ],
     "main": "./out/extension.js",
     "contributes": {
-        "commands": [
-            {
+        "commands": [{
                 "command": "aiCodeAgent.editSelection",
                 "title": "AI: Edit Selection"
             },
             {
                 "command": "aiCodeAgent.fixError",
                 "title": "AI: Fix Error"
+            },
+            {
+                "command": "aiCodeAgent.workspaceEdit",
+                "title": "AI: Workspace Edit"
             }
         ],
         "configuration": {

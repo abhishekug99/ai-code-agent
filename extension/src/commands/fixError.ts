@@ -1,6 +1,6 @@
 // extension/src/commands/fixError.ts
 import * as vscode from "vscode";
-import { editCode, EditRequest, EditResponse } from "../api";
+import { editCode, EditRequest, EditResponse } from "../api/edit";
 import { getRepoRelativePath } from "../utils/path";
 import { showDiffAndApplyUpdatedText } from "../utils/apply";
 

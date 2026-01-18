@@ -1,6 +1,6 @@
 // extension/src/utils/apply.ts
 import * as vscode from "vscode";
-import { EditResponse } from "../api";
+import { EditResponse } from "../api/edit";
 
 export async function showDiffAndApplyUpdatedText(
     doc: vscode.TextDocument,

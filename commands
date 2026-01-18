@@ -144,3 +144,41 @@ Add type hints and a docstring. Keep behavior identical.
 Press Enter.
 
 Now it calls your FastAPI /edit.
+
+
+# to test Workspace_Edit
+(.venv) PS D:\Abhishek\Syracuse\UpScale\ai-code-agent> $body = @{
+>>   instruction = "Create pytest tests for add() and keep them simple. Put them in tests/test_sample.py"
+>>   files = @(
+>>     @{
+>>       file_path = "sample.py"
+>>       original_text = "def add(a,b):`n    return a+b`n"
+>>     },
+>>     @{
+>>       file_path = "tests/test_sample.py"
+>>       original_text = $null
+>>     }
+>>   )
+>>   user_context = "Use pytest style. Include edge cases for ints and negatives."
+>> } | ConvertTo-Json -Depth 10
+>> 
+>> $response = Invoke-RestMethod -Uri "http://localhost:8787/workspace_edit" -Method Post -ContentType "application/json" -Body $body
+>> $response | ConvertTo-Json -Depth 10
+
+    #to write test directory and test file
+     -Uri "http://localhost:8787/workspace_edit" -Method Post -ContentType "application/json" -Body $body
+>>
+>> # Apply operations to disk (repo root assumed current directory)
+>> foreach ($op in $response.operations) {
+>>   $relativePath = $op.file_path
+>>   $fullPath = Join-Path (Get-Location) $relativePath
+>>   $dir = Split-Path $fullPath -Parent
+>>
+>>   if (!(Test-Path $dir)) {
+>>     New-Item -ItemType Directory -Path $dir -Force | Out-Null
+>>   }
+>>
+>>   Set-Content -Path $fullPath -Value $op.updated_text -Encoding UTF8
+>>   Write-Host "Wrote:" $fullPath
+>> }
+>>
