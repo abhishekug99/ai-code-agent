@@ -5,11 +5,15 @@ import os
 load_dotenv()
 
 from agent.app.routers import edit, health
+from agent.app.routers import workspace_edit
 
 app = FastAPI(title="AI Code Agent")
 
 app.include_router(health.router)
 app.include_router(edit.router)
+app.include_router(workspace_edit.router)
+
+
 
 
 # @app.get("/health")
