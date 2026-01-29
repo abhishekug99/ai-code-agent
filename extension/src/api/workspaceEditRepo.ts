@@ -5,10 +5,16 @@ export type WorkspaceEditRepoRequest = {
     repo_root: string;
     scope_paths: string[];
     allowed_root_dirs: string[];
+    allowed_paths: string[];
     max_files?: number;
     max_bytes?: number;
     intent?: string | null;
     user_context?: string | null;
+};
+
+export type WorkspaceFileInput = {
+    file_path: string;
+    original_text: string | null;
 };
 
 export type WorkspaceFileOutput = {

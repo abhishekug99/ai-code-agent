@@ -29,13 +29,32 @@ def _is_safe_repo_relative(path: str) -> bool:
 
 def _is_under_allowed_roots(rel_path: str, allowed_roots: List[str]) -> bool:
     rel = rel_path.replace("\\", "/").lstrip("/")
+
     for root in allowed_roots:
-        r = root.replace("\\", "/").strip("/")
-        if r == "":
-            continue
+        r = (root or "").replace("\\", "/").strip()
+
+        # allow whole repo
+        if r in {".", "/", ""}:
+            return True
+
+        r = r.strip("/")
+
         if rel == r or rel.startswith(r + "/"):
             return True
+
     return False
+
+
+def _is_allowed_target(rel_path: str, allowed_roots: List[str], allowed_paths: List[str]) -> bool:
+    rel = rel_path.replace("\\", "/").lstrip("/")
+
+    # explicit allow list wins
+    normalized_allowed = {p.replace("\\", "/").lstrip("/") for p in allowed_paths}
+    if rel in normalized_allowed:
+        return True
+
+    # otherwise check roots
+    return _is_under_allowed_roots(rel, allowed_roots)
 
 
 def _score_file(rel_path: str) -> int:
@@ -137,6 +156,7 @@ def workspace_edit_repo(req: WorkspaceEditRepoRequest):
         file_summaries=summaries[:80],  # cap
         excerpts=excerpts,
         allowed_root_dirs=req.allowed_root_dirs,
+        allowed_paths=req.allowed_paths,
         intent=req.intent,
         user_context=req.user_context,
     )
@@ -191,6 +211,11 @@ def workspace_edit_repo(req: WorkspaceEditRepoRequest):
 
         if not _is_under_allowed_roots(file_path, req.allowed_root_dirs):
             top_warnings.append(f"File not under allowed_root_dirs (ignored): {file_path}")
+            continue
+        
+        if not _is_allowed_target(file_path, req.allowed_root_dirs, req.allowed_paths):
+            top_warnings.append(
+            f"File not allowed (ignored): {file_path}. Allowed roots: {req.allowed_root_dirs}, allowed paths: {req.allowed_paths}")
             continue
 
         original_text = originals_map.get(file_path)

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { workspaceEdit, WorkspaceEditRequest, WorkspaceEditResponse, WorkspaceFileInput } from "../api/workspaceEdit";
-import { workspaceEditRepo, WorkspaceEditRepoRequest, WorkspaceEditRepoResponse } from "../api/workspaceEditRepo";
+// import { workspaceEdit, WorkspaceEditRequest, WorkspaceEditResponse, WorkspaceFileInput } from "../api/workspaceEdit";
+import { workspaceEditRepo, WorkspaceEditRepoRequest, WorkspaceEditRepoResponse, WorkspaceFileInput  } from "../api/workspaceEditRepo";
 import { getRepoRelativePath } from "../utils/path";
 import { applyWorkspaceOperations } from "../utils/applyWorkspace";
 
@@ -27,6 +27,26 @@ function getWorkspaceRoot(): string | null {
 
     return root.uri.fsPath;
 }
+
+function extractLikelyPaths(instruction: string): string[] {
+    const paths = new Set<string>();
+
+    // 1) paths with folders: src/a.py, agent/app/x.py, docs/readme.md
+    const withDir = instruction.match(/[A-Za-z0-9_\-./]+\/[A-Za-z0-9_\-./]+\.(py|md|txt|toml|yaml|yml|json)/g) ?? [];
+    withDir.forEach(p => paths.add(p.replace(/\\/g, "/")));
+
+    // 2) root files: README.md, pyproject.toml, requirements.txt, main.py
+    const rootFiles = instruction.match(/\b[A-Za-z0-9_\-]+\.(py|md|txt|toml|yaml|yml|json)\b/g) ?? [];
+    rootFiles.forEach(p => paths.add(p.replace(/\\/g, "/")));
+
+    return Array.from(paths);
+}
+
+function needsRepoWideWrites(paths: string[]): boolean {
+    // If any path is not under tests/, we need broader permission
+    return paths.some(p => !p.startsWith("tests/"));
+}
+
 
 export function registerWorkspaceEdit(): vscode.Disposable {
     return vscode.commands.registerCommand("aiCodeAgent.workspaceEdit", async () => {
@@ -66,11 +86,32 @@ export function registerWorkspaceEdit(): vscode.Disposable {
         }
 
 
-        const payload: WorkspaceEditRequest = {
+        // const payload: WorkspaceEditRepoRequest = {
+        //     instruction,
+        //     files,
+        //     user_context: "Follow existing project conventions. Keep changes minimal and safe.",
+        //     max_files: 10
+        // };
+
+        const root = getWorkspaceRoot();
+        if (!root) {
+            vscode.window.showErrorMessage("No workspace folder open.");
+            return;
+        }
+        const allowed_paths = extractLikelyPaths(instruction);
+        const allowed_root_dirs = looksLikeTestInstruction(instruction) && !needsRepoWideWrites(allowed_paths)
+            ? ["tests"]
+            : ["."];
+        const repoPayload: WorkspaceEditRepoRequest = {
             instruction,
-            files,
-            user_context: "Follow existing project conventions. Keep changes minimal and safe.",
-            max_files: 10
+            repo_root: root,
+            scope_paths: ["."],
+            allowed_root_dirs,
+            allowed_paths,
+            max_files: 200,
+            max_bytes: 800000,
+            intent: looksLikeTestInstruction(instruction) ? "generate_tests" : null,
+            user_context: "Generate pytest tests based on repo context. Follow existing conventions and cover edge cases. Additionally follow new instruction abut creating new file/folder/directory."
         };
 
         const progressTitle = "AI Code Agent: workspace editing...";
@@ -85,21 +126,27 @@ export function registerWorkspaceEdit(): vscode.Disposable {
 
                 try {
                     if (looksLikeTestInstruction(instruction)) {
+                        const allowed_paths = extractLikelyPaths(instruction);
+                        const allowed_root_dirs = looksLikeTestInstruction(instruction) && !needsRepoWideWrites(allowed_paths)
+                            ? ["tests"]
+                            : ["."];
                         const repoPayload: WorkspaceEditRepoRequest = {
                             instruction,
                             repo_root: root,
                             scope_paths: ["."],
-                            allowed_root_dirs: ["tests"],
+                            allowed_root_dirs,
+                            allowed_paths,
                             max_files: 200,
                             max_bytes: 800000,
-                            intent: "generate_tests",
-                            user_context: "Generate pytest tests based on repo context. Follow existing conventions and cover edge cases."
+                            intent: looksLikeTestInstruction(instruction) ? "generate_tests" : null,
+                            user_context: "Generate pytest tests based on repo context. Follow existing conventions and cover edge cases. Additionally follow new instruction abut creating new file/folder/directory."
                         };
 
                         const resp: WorkspaceEditRepoResponse = await workspaceEditRepo(repoPayload);
                         await applyWorkspaceOperations(resp);
-                    } else {
-                        const resp: WorkspaceEditResponse = await workspaceEdit(payload);
+                    } 
+                    else {
+                        const resp: WorkspaceEditRepoResponse = await workspaceEditRepo(repoPayload);
                         await applyWorkspaceOperations(resp);
                     }
                 } catch (e: any) {
