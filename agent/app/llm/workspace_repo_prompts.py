@@ -13,8 +13,10 @@ Rules:
 - Output ONLY JSON. No markdown. No prose.
 - You may create/modify multiple files, but only under allowed_root_dirs.
 - Prefer pytest if generating tests.
+- Whenever creating new directory add __init__.py file.
 - Keep changes minimal and consistent with repo conventions.
 - Ensure Python code is syntactically correct.
+- You may only create/modify files under allowed_root_dirs OR exactly listed in allowed_paths.
 
 JSON schema:
 {
@@ -35,6 +37,7 @@ def build_user_prompt_workspace_repo(
     file_summaries: List[Dict[str, Any]],
     excerpts: List[Dict[str, Any]],
     allowed_root_dirs: List[str],
+    allowed_paths: List[str],  
     intent: Optional[str] = None,
     user_context: Optional[str] = None,
 ) -> str:
@@ -48,5 +51,6 @@ def build_user_prompt_workspace_repo(
         "file_summaries": file_summaries,
         "excerpts": excerpts,
         "user_context": user_context,
+        "allowed_paths": allowed_paths,
     }
     return json.dumps(payload, ensure_ascii=False)

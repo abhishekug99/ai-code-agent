@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Set
 
 
 class WorkspaceEditRepoRequest(BaseModel):
@@ -13,6 +13,8 @@ class WorkspaceEditRepoRequest(BaseModel):
 
     # allowed roots (relative). model may only create/modify files under these dirs
     allowed_root_dirs: List[str] = Field(default_factory=lambda: ["tests"], min_length=1)
+    
+    allowed_paths: List[str] = Field(default_factory=list)
 
     # safety caps
     max_files: int = 200
