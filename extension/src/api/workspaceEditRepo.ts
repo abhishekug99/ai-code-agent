@@ -32,6 +32,7 @@ export type WorkspaceEditRepoResponse = {
 
 export async function workspaceEditRepo(req: WorkspaceEditRepoRequest): Promise<WorkspaceEditRepoResponse> {
     const client = agentHttpClient();
-    const resp = await client.post("/workspace_edit_repo", req);
+    // const resp = await client.post("/workspace_edit_repo", req);
+    const resp = await client.post("/workspace_edit_repo_quality", req);
     return resp.data as WorkspaceEditRepoResponse;
 }
