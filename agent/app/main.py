@@ -7,6 +7,8 @@ load_dotenv()
 from agent.app.routers import edit, health
 from agent.app.routers import workspace_edit
 from agent.app.routers import workspace_edit_repo
+from agent.app.routers import index
+from agent.app.routers import workspace_edit_repo_quality
 
 app = FastAPI(title="AI Code Agent")
 
@@ -14,6 +16,8 @@ app.include_router(health.router)
 app.include_router(edit.router)
 app.include_router(workspace_edit.router)
 app.include_router(workspace_edit_repo.router)
+app.include_router(index.router)
+app.include_router(workspace_edit_repo_quality.router)
 
 
 

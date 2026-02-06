@@ -11,7 +11,8 @@ from agent.app.patch.diff import make_unified_diff
 from agent.app.retrieval.repo_scan import scan_repo_files
 from agent.app.retrieval.py_symbols import extract_python_summary
 from agent.app.retrieval.module_map import build_module_map, detect_src_root
-
+from agent.app.retrieval.embeddings import embed_query
+from agent.app.retrieval.qdrant_store import search as qdrant_search
 
 router = APIRouter()
 
@@ -136,17 +137,58 @@ def workspace_edit_repo(req: WorkspaceEditRepoRequest):
             s["file_path"] = rel_path
             summaries.append(s)
 
-    # Select excerpts for LLM: top scored + small cap
-    scored = sorted(scanned, key=lambda x: _score_file(x[0]), reverse=True)
-    excerpt_cap = 18  # keep prompt bounded
+
+    # # Select excerpts for LLM: top scored + small cap
+    # scored = sorted(scanned, key=lambda x: _score_file(x[0]), reverse=True)
+    # excerpt_cap = 18  # keep prompt bounded
     excerpts: List[Dict[str, Any]] = []
-    for rel_path, text in scored[:excerpt_cap]:
-        # truncate excerpt to reduce prompt size
-        snippet = text[:4000]
-        excerpts.append({"file_path": rel_path, "excerpt": snippet})
+    # for rel_path, text in scored[:excerpt_cap]:
+    #     # truncate excerpt to reduce prompt size
+    #     snippet = text[:4000]
+    #     excerpts.append({"file_path": rel_path, "excerpt": snippet})
 
+    
     repo_map = _build_repo_map(scanned)
+    # --- UPDATED: Use Qdrant retrieval first, fallback to heuristic excerpts ---
+    top_warnings: List[str] = []
+    excerpts: List[Dict[str, Any]] = []
 
+    rag_used = False
+    try:
+        qv = embed_query(req.instruction)
+        hits = qdrant_search(qv, limit=12)
+
+        # hits payloads should include file_path + text (+ optional line numbers)
+        for h in hits:
+            fp = h.get("file_path")
+            txt = h.get("text", "")
+            if not isinstance(fp, str):
+                continue
+            if not isinstance(txt, str):
+                txt = str(txt)
+            excerpts.append({
+                "file_path": fp,
+                "excerpt": txt[:4000],
+                "start_line": h.get("start_line"),
+                "end_line": h.get("end_line"),
+                "score": h.get("_score"),
+            })
+
+        if excerpts:
+            rag_used = True
+    except Exception as e:
+        top_warnings.append(f"RAG search failed; falling back to heuristic excerpts: {e}")
+
+    if not rag_used:
+        scored = sorted(scanned, key=lambda x: _score_file(x[0]), reverse=True)
+        excerpt_cap = 18  # keep prompt bounded
+        for rel_path, text in scored[:excerpt_cap]:
+            excerpts.append({"file_path": rel_path, "excerpt": text[:4000]})
+
+    repo_map["rag_used"] = rag_used
+    repo_map["rag_chunks"] = len(excerpts)
+    
+    
     client = get_openai_client()
     user_prompt = build_user_prompt_workspace_repo(
         instruction=req.instruction,

@@ -12,7 +12,9 @@
     "activationEvents": [
         "onCommand:aiCodeAgent.editSelection",
         "onCommand:aiCodeAgent.fixError",
-        "onCommand:aiCodeAgent.workspaceEdit"
+        "onCommand:aiCodeAgent.workspaceEdit",
+        "onCommand:aiCodeAgent.indexRepo"
+
     ],
     "main": "./out/extension.js",
     "contributes": {
@@ -27,6 +29,10 @@
             {
                 "command": "aiCodeAgent.workspaceEdit",
                 "title": "AI: Workspace Edit"
+            },
+            {
+                "command": "aiCodeAgent.indexRepo",
+                "title": "AI: Index Repo"
             }
         ],
         "configuration": {

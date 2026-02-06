@@ -21,3 +21,6 @@ httpx==0.27.0
 # Optional (enable later, safe to install now)
 tiktoken==0.6.0        # token counting / truncation
 rich==13.7.1          # better logs
+
+# quadrant db
+qdrant-client==1.9.2

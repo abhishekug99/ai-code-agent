@@ -182,3 +182,6 @@ Now it calls your FastAPI /edit.
 >>   Write-Host "Wrote:" $fullPath
 >> }
 >>
+
+#quadrant
+docker run -p 6333:6333 -v qdrant_data:/qdrant/storage qdrant/qdrant:latest
