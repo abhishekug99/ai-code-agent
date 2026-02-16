@@ -351,7 +351,7 @@ Invoke-RestMethod -Uri "http://127.0.0.1:6333/collections" -Method Get
 **From PowerShell:**
 ```powershell
 $body = @{
-  repo_root = "D:\Abhishek\Syracuse\UpScale\ai-code-agent"
+  repo_root = "D:\**path**\ai-code-agent"
   scope_paths = @(".")
   max_files = 200
   max_bytes = 2000000
